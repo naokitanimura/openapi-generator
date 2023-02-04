@@ -32,7 +32,6 @@ import static org.openapitools.codegen.languages.features.DocumentationProviderF
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-import com.github.javaparser.ast.nodeTypes.NodeWithName;
 import io.swagger.parser.OpenAPIParser;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -617,6 +616,39 @@ public class SpringCodegenTest {
                 .hasParameter("statusArray").withType("List<MultipartMixedStatus>")
                 .assertParameterAnnotations()
                 .containsWithNameAndAttributes("RequestPart", ImmutableMap.of("value", "\"statusArray\"", "required", "false"));
+    }
+
+    @Test
+    public void testValidationMultipartBoot() throws IOException {
+        final SpringCodegen codegen = new SpringCodegen();
+        codegen.setLibrary("spring-boot");
+        codegen.setDelegatePattern(true);
+        codegen.additionalProperties().put(DOCUMENTATION_PROVIDER, "springfox");
+
+        final Map<String, File> files = generateFiles(codegen, "src/test/resources/3_0/spring/form-multipart-validation.yaml");
+
+        // Check that api validates mixed multipart request
+        JavaFileAssert.assertThat(files.get("MultipartValidationApi.java"))
+                .assertMethod("multipartValidation", "String", "MultipartFile", "List<String>")
+                .hasParameter("name").withType("String")
+                .assertParameterAnnotations()
+                .containsWithName("Valid")
+                .containsWithNameAndAttributes("Size", ImmutableMap.of("max", "25"))
+                .containsWithNameAndAttributes("ApiParam", ImmutableMap.of("value", "\"required name\""))
+                .containsWithNameAndAttributes("RequestParam", ImmutableMap.of("value", "\"name\"", "required", "true"))
+                .toParameter().toMethod()
+                .hasParameter("file").withType("MultipartFile")
+                .assertParameterAnnotations()
+                .containsWithNameAndAttributes("ApiParam", ImmutableMap.of("value", "\"required file\""))
+                .containsWithNameAndAttributes("RequestPart", ImmutableMap.of("value", "\"file\"", "required", "true"))
+                .toParameter().toMethod()
+                .hasParameter("loves").withType("List<String>")
+                .assertParameterAnnotations()
+                // TODO 要素のStringの検証アノテーション
+                .containsWithName("Valid")
+                .containsWithNameAndAttributes("Size", ImmutableMap.of("max", "10"))
+                .containsWithNameAndAttributes("ApiParam", ImmutableMap.of("value", "\"loved stuffs\""))
+                .containsWithNameAndAttributes("RequestPart", ImmutableMap.of("value", "\"loves\"", "required", "false"));
     }
 
     @Test

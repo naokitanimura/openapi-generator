@@ -1,0 +1,38 @@
+openapi: '3.0.1'
+info:
+  version: 1.0.0
+  title: MultipartFile test
+paths:
+  /multipart-validation:
+    post:
+      tags:
+        - multipart
+      description: MultipartFormData Validator Annotated test
+      operationId: multipartValidation
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+                - file
+              properties:
+                name:
+                  description: "required name"
+                  type: string
+                  maxLength: 25
+                loves:
+                  description: "loved stuffs"
+                  type: array
+                  maxItems: 10
+                  items:
+                    maxLength: 15
+                    type: string
+                file:
+                  description: "required file"
+                  type: string
+                  format: binary
+      responses:
+        '204':
+          description: Successful operation
